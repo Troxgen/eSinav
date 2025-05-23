@@ -1,0 +1,1 @@
+<?php // Fonksiyonlar buraya ?>
