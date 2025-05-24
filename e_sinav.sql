@@ -1,105 +1,122 @@
-    -- e_sinav veri tabanı yapısı: Tüm tablolar, ilişkiler ve alanlar dahil
+CREATE TABLE okullar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(150),
+    sehir VARCHAR(100),
+    ilce VARCHAR(100)
+);
 
-    CREATE DATABASE IF NOT EXISTS e_sinav CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-    USE e_sinav;
+CREATE TABLE siniflar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(50),
+    seviye INT,
+    okul_id INT,
+    FOREIGN KEY (okul_id) REFERENCES okullar(id)
+);
 
-    -- 1. Kullanıcılar
-    CREATE TABLE kullanicilar (
-        kullanici_id INT AUTO_INCREMENT PRIMARY KEY,
-        kullanici_adi VARCHAR(50) UNIQUE NOT NULL,
-        sifre CHAR(32) NOT NULL,
-        ad_soyad VARCHAR(100) NOT NULL,
-        e_posta VARCHAR(100),
-        telefon VARCHAR(20),
-        rol ENUM('admin', 'ogretmen', 'ogrenci') NOT NULL,
-        aktif BOOLEAN DEFAULT TRUE,
-        kayit_tarihi DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
+CREATE TABLE kullanicilar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(100),
+    eposta VARCHAR(100) UNIQUE,
+    sifre VARCHAR(255),
+    rol ENUM('ogrenci', 'ogretmen', 'admin') NOT NULL,
+    okul_id INT,
+    sinif_id INT,
+    kayit_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (okul_id) REFERENCES okullar(id),
+    FOREIGN KEY (sinif_id) REFERENCES siniflar(id)
+);
 
-    -- 2. Roller (isteğe bağlı, kullanıcıdan bağımsız kullanılabilir)
-    CREATE TABLE roller (
-        rol_id INT AUTO_INCREMENT PRIMARY KEY,
-        rol_adi VARCHAR(50) UNIQUE NOT NULL,
-        seviye INT NOT NULL
-    );
+CREATE TABLE dersler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(100)
+);
 
-    -- 3. Sınavlar
-    CREATE TABLE sinavlar (
-        sinav_id INT AUTO_INCREMENT PRIMARY KEY,
-        baslik VARCHAR(100) NOT NULL,
-        aciklama TEXT,
-        ogretmen_id INT NOT NULL,
-        baslangic DATETIME,
-        bitis DATETIME,
-        sure INT NOT NULL,
-        aktif BOOLEAN DEFAULT TRUE,
-        FOREIGN KEY (ogretmen_id) REFERENCES kullanicilar(kullanici_id)
-    );
+CREATE TABLE ogretmen_ders_sinif (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogretmen_id INT,
+    ders_id INT,
+    sinif_id INT,
+    FOREIGN KEY (ogretmen_id) REFERENCES kullanicilar(id),
+    FOREIGN KEY (ders_id) REFERENCES dersler(id),
+    FOREIGN KEY (sinif_id) REFERENCES siniflar(id)
+);
 
-    -- 4. Sorular
-    CREATE TABLE sorular (
-        soru_id INT AUTO_INCREMENT PRIMARY KEY,
-        sinav_id INT NOT NULL,
-        icerik TEXT NOT NULL,
-        puan DECIMAL(5,2) DEFAULT 1.00,
-        zorluk ENUM('kolay', 'orta', 'zor') DEFAULT 'orta',
-        FOREIGN KEY (sinav_id) REFERENCES sinavlar(sinav_id)
-    );
+CREATE TABLE sinavlar (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ad VARCHAR(100),
+    ders_id INT,
+    ogretmen_id INT,
+    odev_mi BOOLEAN DEFAULT 0,
+    olusturma_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ders_id) REFERENCES dersler(id),
+    FOREIGN KEY (ogretmen_id) REFERENCES kullanicilar(id)
+);
 
-    -- 5. Seçenekler
-    CREATE TABLE secenekler (
-        secenek_id INT AUTO_INCREMENT PRIMARY KEY,
-        soru_id INT NOT NULL,
-        secenek_harf CHAR(1) NOT NULL,
-        secenek_icerik TEXT NOT NULL,
-        dogru_mu BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (soru_id) REFERENCES sorular(soru_id)
-    );
+CREATE TABLE sorular (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    sinav_id INT,
+    soru_metni TEXT,
+    dogru_secenek_id INT,
+    zorluk ENUM('kolay', 'orta', 'zor'),
+    FOREIGN KEY (sinav_id) REFERENCES sinavlar(id)
+);
 
-    -- 6. Öğrenci - Sınav eşleşmesi
-    CREATE TABLE ogrenci_sinav (
-        ogrenci_sinav_id INT AUTO_INCREMENT PRIMARY KEY,
-        ogrenci_id INT NOT NULL,
-        sinav_id INT NOT NULL,
-        baslangic_zamani DATETIME DEFAULT CURRENT_TIMESTAMP,
-        bitis_zamani DATETIME,
-        tamamlandi BOOLEAN DEFAULT FALSE,
-        FOREIGN KEY (ogrenci_id) REFERENCES kullanicilar(kullanici_id),
-        FOREIGN KEY (sinav_id) REFERENCES sinavlar(sinav_id)
-    );
+CREATE TABLE secenekler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    soru_id INT,
+    harf CHAR(1),
+    metin TEXT,
+    FOREIGN KEY (soru_id) REFERENCES sorular(id)
+);
 
-    -- 7. Öğrenci cevapları
-    CREATE TABLE ogrenci_cevaplar (
-        cevap_id INT AUTO_INCREMENT PRIMARY KEY,
-        ogrenci_sinav_id INT NOT NULL,
-        soru_id INT NOT NULL,
-        secilen_secenek_id INT,
-        FOREIGN KEY (ogrenci_sinav_id) REFERENCES ogrenci_sinav(ogrenci_sinav_id),
-        FOREIGN KEY (soru_id) REFERENCES sorular(soru_id),
-        FOREIGN KEY (secilen_secenek_id) REFERENCES secenekler(secenek_id)
-    );
+CREATE TABLE ogrenci_sinavlari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogrenci_id INT,
+    sinav_id INT,
+    puan DECIMAL(5,2),
+    baslama_zamani DATETIME,
+    bitis_zamani DATETIME,
+    FOREIGN KEY (ogrenci_id) REFERENCES kullanicilar(id),
+    FOREIGN KEY (sinav_id) REFERENCES sinavlar(id)
+);
 
-    -- 8. Etiketler
-    CREATE TABLE etiketler (
-        etiket_id INT AUTO_INCREMENT PRIMARY KEY,
-        isim VARCHAR(50) UNIQUE NOT NULL
-    );
+CREATE TABLE ogrenci_cevaplari (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogrenci_sinav_id INT,
+    soru_id INT,
+    secilen_secenek_id INT,
+    dogru_mu BOOLEAN,
+    FOREIGN KEY (ogrenci_sinav_id) REFERENCES ogrenci_sinavlari(id),
+    FOREIGN KEY (soru_id) REFERENCES sorular(id),
+    FOREIGN KEY (secilen_secenek_id) REFERENCES secenekler(id)
+);
 
-    -- 9. Soru - Etiket eşleşmesi
-    CREATE TABLE soru_etiket (
-        soru_id INT NOT NULL,
-        etiket_id INT NOT NULL,
-        PRIMARY KEY (soru_id, etiket_id),
-        FOREIGN KEY (soru_id) REFERENCES sorular(soru_id),
-        FOREIGN KEY (etiket_id) REFERENCES etiketler(etiket_id)
-    );
+CREATE TABLE hata_bildirimleri (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogrenci_id INT,
+    soru_id INT,
+    aciklama TEXT,
+    bildirim_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ogrenci_id) REFERENCES kullanicilar(id),
+    FOREIGN KEY (soru_id) REFERENCES sorular(id)
+);
 
-    -- 10. Giriş kayıtları
-    CREATE TABLE giris_kaydi (
-        kayit_id INT AUTO_INCREMENT PRIMARY KEY,
-        kullanici_id INT NOT NULL,
-        ip_adresi VARCHAR(45),
-        tarayici VARCHAR(255),
-        zaman DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (kullanici_id) REFERENCES kullanicilar(kullanici_id)
-    );
+CREATE TABLE takip_edilen_ogretmenler (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogrenci_id INT,
+    ogretmen_id INT,
+    FOREIGN KEY (ogrenci_id) REFERENCES kullanicilar(id),
+    FOREIGN KEY (ogretmen_id) REFERENCES kullanicilar(id)
+);
+
+CREATE TABLE ders_analizi (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ogrenci_id INT,
+    ders_id INT,
+    dogru_sayisi INT,
+    yanlis_sayisi INT,
+    sinav_sayisi INT,
+    guncelleme_tarihi TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ogrenci_id) REFERENCES kullanicilar(id),
+    FOREIGN KEY (ders_id) REFERENCES dersler(id)
+);
