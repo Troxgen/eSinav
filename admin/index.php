@@ -26,8 +26,75 @@ if (!isset($_SESSION['id'])) {
 <body class="index-page">
 
 <?php
-include "assets/php/Template/navbar.php";
+$page = $_GET['page'] ?? 'anasayfa';
+$rol = $_SESSION['rol'] ?? 'ogrenci';
+
+// İzinli sayfalar, page + rol kombinasyonu
+$izinli_sayfalar = [
+    'anasayfa' => ['admin', 'ogretmen', 'ogrenci'],
+    'userlist' => ['admin'],
+    // diğerleri...
+];
+
+// navbar include
+switch ($rol) {
+    case 'admin':
+        include("assets/php/template/admin-navbar.php");
+        break;
+    case 'ogretmen':
+        include("assets/php/template/ogretmen-navbar.php");
+        break;
+    case 'ogrenci':
+    default:
+        include("assets/php/template/ogrenci-navbar.php");
+        break;
+}
+
+// sayfa kontrol
+if (!isset($izinli_sayfalar[$page])) {
+    die("Sayfa bulunamadı 🥲");
+}
+
+if (!in_array($rol, $izinli_sayfalar[$page])) {
+    die("İzinsiz giriş 🤬 Rol: $rol");
+}
+
+// Dinamik sayfa yükleme (anasayfa rol bazlı)
+if ($page === 'anasayfa') {
+    switch ($rol) {
+        case 'admin':
+            include "assets/php/pages/admin/admin-anasayfa.php";
+            break;
+        case 'ogretmen':
+            include "assets/php/Pages/Ogretmen/ogretmen-anasayfa.php";
+            break;
+        case 'ogrenci':
+        default:
+            include "assets/php/Pages/Ogrenci/ogrenci-anasayfa.php";
+            break;
+    }
+} else {
+    // Diğer sayfalar normal switch
+    switch ($page) {
+        case "anasayfa":
+            include "assets/php/pages/admin/admin-anasayfa.php";
+            break;
+        case "ogretmenler":
+            include "assets/php/pages/admin/ogretmenler.php";
+            break;
+        case "ogrenciler":
+            include "assets/php/pages/admin/ogrenciler.php";
+            break;
+        case "siniflar":
+            include "assets/php/pages/admin/siniflar.php";
+            break;
+        default:
+            die("Hadi oradan, böyle sayfa mı olur?! 🤡");
+    }
+}
+
 ?>
+
 
 <a href="#" id="scroll-top" class="scroll-top d-flex align-items-center justify-content-center">
     <i class="bi bi-arrow-up-short"></i>
@@ -42,4 +109,3 @@ include "assets/php/Template/navbar.php";
 
 </body>
 </html>
-""

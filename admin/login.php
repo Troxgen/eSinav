@@ -67,8 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </form>
 
                     <div class="text-center mt-5 text-lg fs-4">
-                        <p class="text-gray-600">Hesabın yok mu? <a href="auth-register.html" class="font-bold">Kayıt ol</a>.</p>
-                        <p><a class="font-bold" href="auth-forgot-password.html">Şifremi unuttum</a>.</p>
+                        <p class="text-gray-600">Hesabın yok mu? <a href="register.php" class="font-bold">Kayıt ol</a>.</p>
                     </div>
                 </div>
             </div>

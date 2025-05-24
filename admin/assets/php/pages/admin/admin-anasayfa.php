@@ -1,4 +1,36 @@
-            <div class="page-heading">
+
+<?php
+try {
+    $db = new PDO("mysql:host=localhost;dbname=e_sinav;charset=utf8", "root", "");
+} catch (PDOException $e) {
+    echo $e->getMessage();
+}   
+$ogrenciler = $db->query("SELECT * FROM kullanicilar WHERE rol = 'ogrenci'");
+$ogrenci_sayi = $ogrenciler->rowCount();
+
+$ogretmenler = $db->query("SELECT * FROM kullanicilar WHERE rol = 'ogretmen'");
+$ogretmen_sayi = $ogretmenler->rowCount();
+
+$okullar = $db->query("SELECT * FROM okullar  ");
+$okul_sayi = $okullar->rowCount();
+$ortalama_sorgu = $db->query("
+    SELECT 
+        AVG(aylik_toplam) AS ortalama_aylik_kazanc 
+    FROM (
+        SELECT 
+            SUM(odenen_tutar) AS aylik_toplam 
+        FROM odemeler 
+        GROUP BY YEAR(odeme_tarihi), MONTH(odeme_tarihi)
+    ) AS aylikler
+");
+
+$ortalama_sonuc = $ortalama_sorgu->fetch(PDO::FETCH_ASSOC);
+$ortalama_kazanc = $ortalama_sonuc['ortalama_aylik_kazanc'];
+
+
+?>
+
+ <div class="page-heading">
                 <h3>İstatislikleriniz</h3>
             </div>
             <div class="page-content">
@@ -11,12 +43,12 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="stats-icon purple">
-                                                    <i class="iconly-boldShow"></i>
+                                                    <i class="bi bi-mortarboard"></i>
                                                 </div>
                                             </div>
                                             <div class="col-md-8">
-                                                <h6 class="text-muted font-semibold">Çözülen Sınavlar</h6>
-                                                <h6 class="font-extrabold mb-0">{Veri Tabanındn Çekilecek}</h6>
+                                                <h6 class="text-muted font-semibold">Tüm Okullar</h6>
+                                                <h6 class="font-extrabold mb-0"><?= $okul_sayi ?></h6>
                                             </div>
                                         </div>
                                     </div>
@@ -28,12 +60,12 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="stats-icon blue">
-                                                    <i class="iconly-boldProfile"></i>
+                                                   <i class="bi bi-people-fill"></i>
                                                 </div>
                                             </div>
                                             <div class="col-md-8">
-                                                <h6 class="text-muted font-semibold">Ödev Verilen Sınavlar</h6>
-                                                <h6 class="font-extrabold mb-0">{Veri Tabanındn Çekilecek}</h6>
+                                                <h6 class="text-muted font-semibold">Toplam Öğrenci</h6>
+                                                <h6 class="font-extrabold mb-0"><?= $ogrenci_sayi ?></h6>
                                             </div>
                                         </div>
                                     </div>
@@ -45,12 +77,12 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="stats-icon green">
-                                                    <i class="iconly-boldAdd-User"></i>
+                                                    <i class="bi bi-briefcase-fill"></i>
                                                 </div>
                                             </div>
                                             <div class="col-md-8">
-                                                <h6 class="text-muted font-semibold">Takip Ettiğin Öğretmenler</h6>
-                                                <h6 class="font-extrabold mb-0">{Veri Tabanındn Çekilecek}</h6>
+                                                <h6 class="text-muted font-semibold">Toplam Öğretmen</h6>
+                                                <h6 class="font-extrabold mb-0"><?= $ogretmen_sayi ?></h6>
                                             </div>
                                         </div>
                                     </div>
@@ -62,12 +94,12 @@
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="stats-icon red">
-                                                    <i class="iconly-boldBookmark"></i>
+                                                    <i class="bi bi-cash"></i>
                                                 </div>
                                             </div>
                                             <div class="col-md-8">
-                                                <h6 class="text-muted font-semibold">Bildirdiğin Hatalı Sorular</h6>
-                                                <h6 class="font-extrabold mb-0">{Veri Tabanındn Çekilecek}</h6>
+                                                <h6 class="text-muted font-semibold">Ortalam Aylık Kazanç</h6>
+                                                <h6 class="font-extrabold mb-0"><?php echo number_format($ortalama_kazanc, 2, ',', '.'); ?>₺</h6>
                                             </div>
                                         </div>
                                     </div>
@@ -78,7 +110,7 @@
                             <div class="col-12">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4>Profile Visit</h4>
+                                        <h4>Yıllık Kazanç</h4>
                                     </div>
                                     <div class="card-body">
                                         <div id="chart-profile-visit"></div>
@@ -90,7 +122,7 @@
                             <div class="col-12 col-xl-4">
                                 <div class="card">
                                     <div class="card-header">
-                                        <h4>Profile Visit</h4>
+                                        <h4>En Çok Kazandıran Okullar</h4>
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
