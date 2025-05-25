@@ -13,20 +13,22 @@ $ogretmen_sayi = $ogretmenler->rowCount();
 
 $okullar = $db->query("SELECT * FROM okullar  ");
 $okul_sayi = $okullar->rowCount();
-$ortalama_sorgu = $db->query("
+$yillik_kazanc = $db->query("
     SELECT 
-        AVG(aylik_toplam) AS ortalama_aylik_kazanc 
-    FROM (
-        SELECT 
-            SUM(odenen_tutar) AS aylik_toplam 
-        FROM odemeler 
-        GROUP BY YEAR(odeme_tarihi), MONTH(odeme_tarihi)
-    ) AS aylikler
-");
+        DATE_FORMAT(odeme_tarihi, '%Y-%m') AS ay,
+        SUM(odenen_tutar) AS toplam
+    FROM odemeler
+    GROUP BY ay
+    ORDER BY ay ASC
+")->fetchAll(PDO::FETCH_ASSOC);
 
-$ortalama_sonuc = $ortalama_sorgu->fetch(PDO::FETCH_ASSOC);
-$ortalama_kazanc = $ortalama_sonuc['ortalama_aylik_kazanc'];
+$labels = [];
+$values = [];
 
+foreach ($yillik_kazanc as $row) {
+    $labels[] = $row['ay'];
+    $values[] = $row['toplam'];
+}
 
 ?>
 
@@ -99,7 +101,7 @@ $ortalama_kazanc = $ortalama_sonuc['ortalama_aylik_kazanc'];
                                             </div>
                                             <div class="col-md-8">
                                                 <h6 class="text-muted font-semibold">Ortalam Aylık Kazanç</h6>
-                                                <h6 class="font-extrabold mb-0"><?php echo number_format($ortalama_kazanc, 2, ',', '.'); ?>₺</h6>
+                                                <h6 class="font-extrabold mb-0"><?php number_format($ortalama_kazanc ?? 0, 2, ',', '.')?>₺</h6>
                                             </div>
                                         </div>
                                     </div>
@@ -300,3 +302,83 @@ $ortalama_kazanc = $ortalama_sonuc['ortalama_aylik_kazanc'];
       
         </div>
     </div>
+<script>
+    var options = {
+        series: [{
+            name: "Kazanç (₺)",
+            data: [1250, 1800, 1600, 2000, 2400, 3000, 2800, 3200, 2900, 3100, 4000, 4200]
+        }],
+        chart: {
+            height: 350,
+            type: 'area',
+            zoom: { enabled: false },
+            animations: { enabled: true }
+        },
+        dataLabels: { enabled: false },
+        stroke: {
+            curve: 'smooth'
+        },
+        title: {
+            text: 'Yıllık Aylık Kazanç Grafiği',
+            align: 'left'
+        },
+        xaxis: {
+            categories: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara']
+        },
+        colors: ['#00E396']
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chart-profile-visit"), options);
+    chart.render();
+</script>
+<script>
+    var options = {
+        series: [44, 33, 23],
+        chart: {
+            width: 380,
+            type: 'pie',
+        },
+        labels: ['Öğrenci', 'Öğretmen', 'Yönetici'],
+        responsive: [{
+            breakpoint: 480,
+            options: {
+                chart: { width: 320 },
+                legend: { position: 'bottom' }
+            }
+        }],
+        colors: ['#008FFB', '#00E396', '#FEB019']
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chart-visitors-profile"), options);
+    chart.render();
+</script>
+
+<div id="chart-top-schools"></div>
+
+<script>
+    var options = {
+        series: [{
+            data: [3000, 2750, 2400, 2200, 2000]
+        }],
+        chart: {
+            type: 'bar',
+            height: 350
+        },
+        plotOptions: {
+            bar: {
+                horizontal: false,
+                columnWidth: '55%',
+            }
+        },
+        dataLabels: { enabled: false },
+        xaxis: {
+            categories: ['Anadolu Lisesi', 'Fen Lisesi', 'İmam Hatip', 'Meslek Lisesi', 'Özel Kolej'],
+        },
+        colors: ['#775DD0']
+    };
+
+    var chart = new ApexCharts(document.querySelector("#chart-top-schools"), options);
+    chart.render();
+</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.35.3/dist/apexcharts.css">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
